@@ -8,6 +8,8 @@
 ##***************************
 
 ## _ Packages used -------
+
+#ensuring code is flowing back and forth through git correctly
 rm(list = ls())
 library(tidyverse)
 conflicted::conflict_prefer("filter", "dplyr")
