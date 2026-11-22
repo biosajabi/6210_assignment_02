@@ -15,6 +15,34 @@ library(tidyverse)
 conflicted::conflict_prefer("filter", "dplyr")
 library(stringr)
 
+# Reusable function for retrotransposon boxplots -hz (11-22-2026)
+create_boxplot <- function(data,
+                           y_variable,
+                           title,
+                           y_label) {
+  
+  ggplot(
+    data,
+    aes(
+      x = matching_class,
+      y = .data[[y_variable]]
+    )
+  ) +
+    geom_boxplot(fill = "skyblue") +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(
+        angle = 45,
+        hjust = 1
+      )
+    ) +
+    labs(
+      title = title,
+      x = "Retrotransposon Class",
+      y = y_label
+    )
+}
+
 #trich_main is the trichinella sp. we will be comparing our assigned trich. group to
 #trich_t8 is the trichinella sp. our group was assigned
 
@@ -50,45 +78,83 @@ trich_main |>
 trich_t8_retro = trich_t8 |> 
   filter(str_detect(matching_class, "^(LTR|LINE|SINE|PLE)"))
 
-str_detect(trich_t8$matching_class, "^(LTR|LINE|SINE|PLE)")
+## Quality control: confirm which retrotransposon classes
+## remain after filtering and how many observations 
+## belong to each class -hz (11-22-2026)
+
+trich_t8_retro |>
+  count(matching_class) |>
+  arrange(desc(n))
+
+## Quality control: compare the number of rows before and after filtering -hz (11-22-2026)
+
+cat(
+  "Original rows:", nrow(trich_t8),
+  "\nFiltered rows:", nrow(trich_t8_retro),
+  "\n"
+)
 
 ## Identify the retrotransposons in the trich_main class. From Copilot, everything starting with LTR
 
 trich_main_retro = trich_main |> 
   filter(str_detect(matching_class, "^(LTR|PLE|SINE|LINE)"))
 
-str_detect(trich_main$matching_class, "^(LTR|PLE|SINE|LINE)")
+## Quality control: confirm which retrotransposon classes
+## remain after filtering and how many observations
+## belong to each class -hz (11-22-2026)
+
+trich_main_retro |>
+  count(matching_class) |>
+  arrange(desc(n))
+
+## Quality control: compare the number of rows before
+## and after filtering -hz (11-22-2026)
+
+cat(
+  "Original rows:", nrow(trich_main),
+  "\nFiltered rows:", nrow(trich_main_retro),
+  "\n"
+)
 
 unique(trich_t8_retro$matching_class)
 
 
 ## Percentage deletions for trich_t8_retro
-
-trich_t8_retro |> 
-  ggplot(aes(x = matching_class, y = perc_del)) +
-  geom_boxplot() +
-  labs(title = "Trich T8 Retrotransposons", y ="Percent Deletions (%)" , x = "Retrotransposons class")
+## using the function to create the box plot -hz (11-22-2026)
+create_boxplot(
+  trich_t8_retro,
+  "perc_del",
+  "T8 Retrotransposons",
+  "Percent Deletions (%)"
+)
 
 ## Percentage deletions for trich_main_retro
-
-trich_main_retro |> 
-  ggplot(aes(x = matching_class, y = perc_del)) +
-  geom_boxplot() +
-  labs(title = "T. spiralis Retrotransposons", y ="Percent Deletions (%)" , x = "Retrotransposons class")
+## using the function to create the box plot -hz (11-22-2026)
+create_boxplot(
+  trich_main_retro,
+  "perc_del",
+  "T. spiralis Retrotransposons",
+  "Percent Deletions (%)"
+)
  
 ## Percentage insertions for trich_t8_retro
-
-trich_t8_retro |> 
-  ggplot(aes(x = matching_class, y = perc_insert)) +
-  geom_boxplot() +
-  labs(title = "Trich T8 Retrotransposons", y ="Percent Insertions (%)" , x = "Retrotransposons class")
+## using the function to create the box plot -hz (11-22-2026)
+create_boxplot(
+  trich_t8_retro,
+  "perc_insert",
+  "T8 Retrotransposons",
+  "Percent Insertions (%)"
+)
 
 ## Percentage insertions for trich_main_retro
+## using the function to create the box plot + corrected spelling error -hz (11-22-2026) 
 
-trich_main_retro |> 
-  ggplot(aes(x = matching_class, y = perc_insert)) +
-  geom_boxplot() +
-  labs(title = "T. spiarlis Retrotransposons", y ="Percent Insertions (%)" , x = "Retrotransposons class")
+create_boxplot(
+  trich_main_retro,
+  "perc_insert",
+  "T. spiralis Retrotransposons",
+  "Percent Insertions (%)"
+)
 
 ## Percentage deletion and insertion in trich_te_retro
 
@@ -213,6 +279,25 @@ count_matrix <- class_counts |>
 chi_result <- chisq.test(count_matrix)
 chi_result
 # Run the chi-square test and view results
+
+## Additional Statistical Analysis: ----
+## Compare insertion percentages between species - hz (11-22-2026)
+
+insertion_test <- wilcox.test(
+  perc_insert ~ species,
+  data = retro_combined
+)
+
+insertion_test
+
+## Compare deletion percentages between species - hz (11-22-2026)
+
+delete_test <- wilcox.test(
+  perc_del ~ species,
+  data = retro_combined
+)
+
+delete_test
 
 
 
